@@ -18,8 +18,5 @@ namespace gssmraytracer {
                                             const DifferentialGeometry &dg) :
             p(dg.p), nn(dg.nn), u(dg.u), v(dg.v), dpdu(dg.dpdu), dpdv(dg.dpdv),
             dndu(dg.dndu), dndv(dg.dndv), shape(dg.shape) {}
-
-
-
   }
 }

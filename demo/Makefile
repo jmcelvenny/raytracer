@@ -13,4 +13,4 @@ $(EXECUTABLE):
 
 .PHONY : clean
 clean:
-	rm -fr $(EXECUTABLE)
+	rm -fr $(EXECUTABLE) *.exr

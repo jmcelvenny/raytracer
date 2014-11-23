@@ -6,10 +6,12 @@ namespace gssmraytracer {
     class Shape::Impl {
     public:
       math::Transform transform;
+      float reflectivity;
     };
-    Shape::Shape(const math::Transform &transform) :
+    Shape::Shape(const math::Transform &transform, float r) :
       mImpl(new Impl) {
         mImpl->transform = transform;
+        mImpl->reflectivity = r;
     }
 
 
@@ -32,6 +34,9 @@ namespace gssmraytracer {
 
     }
 
+    const float Shape::reflectivity() const {
+      return mImpl->reflectivity;
+    }
 
 
   }

@@ -14,6 +14,7 @@ class and replace the hardcoded information with your team's implementation.
 #include <gssmraytracer/utils/Color.h>
 #include <gssmraytracer/utils/Scene.h>
 #include "Light.h"
+#include <iostream>
 
 using namespace gssmraytracer::geometry;
 namespace gssmraytracer {
@@ -21,6 +22,7 @@ namespace gssmraytracer {
     class LambertianShader::Impl {
     public:
       Color color;
+      int max_num_reflects = 5;
     };
 
     LambertianShader::LambertianShader(const Color &color) : mImpl(new Impl) {
@@ -38,8 +40,7 @@ namespace gssmraytracer {
       }
       return *this;
     }
-    Color LambertianShader::shade(const geometry::DifferentialGeometry &dg) {
-
+    Color LambertianShader::shade(const geometry::DifferentialGeometry &dg, int bounce) {
       // initialize the return color for the shader to black
       Color shadeColor(0,0,0,1);
 
@@ -75,22 +76,31 @@ namespace gssmraytracer {
 	      if (!Scene::getInstance().hit(light_ray)) { // if no objects in the way, do lighting
 		// this computes the cosine of the angle between the light vector
 		// and the geometry normal
-    //reflectiveness
-   // if (lights[i].)
-		float shadeAngle = light_vec.normalized().dot(dg.nn);
+
+      		float shadeAngle = light_vec.normalized().dot(dg.nn);
 		  // if the angle is greater than 0, do the lambertian shading
-		  if (shadeAngle > 0) {
+		      if (shadeAngle > 0) {
 		    // add the diffuse (matte) lighting to the ambient lighting based on
 		    // the intensity and the falloff factor based on the distance
-		    float factor = shadeAngle*intensity/distanceVal_no_falloff;
-		    shadeColor.red += mImpl->color.red*factor;
-		    shadeColor.green += mImpl->color.green*factor;
-		    shadeColor.blue += mImpl->color.blue*factor;
-		  }
-	      }
-
-      }
-       return shadeColor;
+		        float factor = shadeAngle*intensity/distanceVal_no_falloff;
+		        shadeColor.red += mImpl->color.red*factor;
+	          shadeColor.green += mImpl->color.green*factor;
+            shadeColor.blue += mImpl->color.blue*factor;
+		      }
+          if (dg.shape->reflectivity() > 0 && bounce < mImpl->max_num_reflects) {
+            math::Vector normal = math::Vector(dg.nn.x(), dg.nn.y(), dg.nn.z());
+            float cl = -light_ray.dir().dot(normal);
+            Ray reflect_ray = Ray(dg.p, light_ray.dir()+(2*normal* cl));
+            if (!Scene::getInstance().hit(reflect_ray)) {
+              Color temp = shade(dg, bounce+1);
+              shadeColor.red+=(temp.red*dg.shape->reflectivity());
+              shadeColor.green+=(temp.green*dg.shape->reflectivity());
+              shadeColor.blue+=(temp.blue*dg.shape->reflectivity());
+            }
+	        }
+         }
     }
+    return shadeColor;
   }
+}
 }

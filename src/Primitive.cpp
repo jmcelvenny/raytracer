@@ -27,8 +27,8 @@ namespace gssmraytracer {
       return mImpl->shape->hit(ws_ray, hit_time, dg);
     }
 
-    const utils::Color Primitive::shade(const std::shared_ptr<DifferentialGeometry> &dg) const {
-      return mImpl->shader->shade(*dg);
+    const utils::Color Primitive::shade(const std::shared_ptr<DifferentialGeometry> &dg, int bounce) const {
+      return mImpl->shader->shade(*dg, bounce);
     }
   }
 }

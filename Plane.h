@@ -5,18 +5,18 @@
 
 namespace gssmraytracer {
   namespace geometry {
-    class Sphere : public Shape {
+    class Plane : public Shape {
     public:
-      Sphere (const math::Transform &transform,
-                          const float radius, const float ref);
-      Sphere (const math::Transform &transform,
-                          const float radius, const float ref, float z0, float z1, float pm=360.0f);
+      Plane (const math::Transform &transform,
+                          const float radius);
+      Plane (const math::Transform &transform,
+                          const float radius, float z0, float z1, float pm=360.0f);
       bool hit(const utils::Ray &ws_ray, float &tHit) const;
       bool hit(const utils::Ray &ws_ray, float &tHit,
                std::shared_ptr<DifferentialGeometry> &dg) const;
 
-      const float reflectivity() const;
-      virtual ~Sphere();
+
+      virtual ~Plane();
     private:
       class Impl;
       std::shared_ptr<Impl> mImpl;

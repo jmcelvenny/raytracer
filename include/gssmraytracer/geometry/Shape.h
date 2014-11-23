@@ -15,7 +15,7 @@ namespace gssmraytracer {
     class Shape {
     public:
       //! Initializes all derived Shapes with a Transform and a Shader
-      Shape(const math::Transform &transform);
+      Shape(const math::Transform &transform, float r);
 
       //! Copy Constructor
       Shape(const Shape&);
@@ -47,6 +47,8 @@ namespace gssmraytracer {
 
       //! converts ray from object to world space
       const math::Transform objectToWorldSpace() const;
+
+      virtual const float reflectivity() const;
 
     private:
       class Impl;

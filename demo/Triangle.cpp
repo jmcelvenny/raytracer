@@ -2,7 +2,7 @@
 #include <gssmraytracer/math/Transform.h>
 #include <gssmraytracer/utils/Color.h>
 #include <gssmraytracer/utils/gssmraytracer.h>
-#include "Sphere.h"
+#include "Triangle.h"
 #include <algorithm>
 #include <iostream>
 
@@ -11,63 +11,20 @@ using namespace gssmraytracer::utils;
 namespace gssmraytracer {
   namespace geometry {
 
-    class Sphere::Impl {
+    class Triangle::Impl {
     public:
-      float radius;
-      float phiMax;
-      float zmin, zmax;
-      float thetaMin, thetaMax;
-      Transform o2w;
-      Transform w2o;
+      Point v1, v2, v3;
       float reflectivity;
-
-      inline bool Quadratic(const float A, const float B,
-                            const float C, float *t0, float *t1) {
-                              float discrim = B * B -4.f * A * C;
-                              if (discrim <= 0.) return false;
-                              float rootDiscrim = sqrt(discrim);
-
-                              float q;
-                              if (B < 0) q = -0.5f * (B - rootDiscrim);
-                              else       q = -0.5f * (B + rootDiscrim);
-                              *t0 = q /A;
-                              *t1 = C/q;
-
-                              if (*t0 > *t1) std::swap(*t0, *t1);
-                              return true;
-                            }
-
-    };
-
-    Sphere::Sphere(const math::Transform &transform,
-                        const float radius, const float ref) : Shape(transform, 0.f), mImpl(new Impl) {
-                          mImpl->radius = radius;
-                          mImpl->zmin = -radius;
-                          mImpl->zmax = radius;
-                          mImpl->thetaMin = acosf(-1.f);
-                          mImpl->thetaMax = acosf(1.f);
-                          mImpl->phiMax = Radians(360.0f);
-                          mImpl->w2o = transform;
-                          mImpl->o2w = transform.inverse();
-                          mImpl->reflectivity = ref;
-                        }
-
-    Sphere::Sphere(const Transform &transform,
-                 const float radius, float z0, float z1, float pm, const float ref) : Shape(transform,0.f), mImpl(new Impl) {
-                   mImpl->radius = radius;
-                   mImpl->zmin = Clamp(fmin(z0,z1), -radius, radius);
-                   mImpl->zmax = Clamp(fmax(z0,z1), -radius, radius);
-                   mImpl->thetaMin = acosf(Clamp(mImpl->zmin/radius, -1.f, 1.f));
-                   mImpl->thetaMax = acosf(Clamp(mImpl->zmax/radius, -1.f, 1.f));
-                   mImpl->phiMax = Radians(Clamp(pm, 0.0f, 360.0f));
-                   mImpl->w2o = transform;
-                   mImpl->o2w = transform.inverse();
-                   mImpl->reflectivity = ref;
-
+    Triangle::Triangle (const math::Transform &transform,
+                    const Point &v1, const Point &v2, const Point &v3, const float ref) : Shape(&transform, ref), mImpl(new Impl) {
+                      mImpl->v1 = v1;
+                      mImpl->v2 = v2;
+                      mImpl->v3 = v3;
+                      mImpl->reflectivity = ref;
     }
-    Sphere::~Sphere() {}
+    Triangle::~Triangle() {}
 
-    bool Sphere::hit(const utils::Ray &ws_ray, float &thit) const {
+    bool Triangle::hit(const utils::Ray &ws_ray, float &thit) const {
 
       float phi;
       Point phit;
@@ -82,8 +39,8 @@ namespace gssmraytracer {
       if (!box.intersect(os_ray,os_ray.mint(),os_ray.maxt()) ) {
 		return false;
       }
-      // Do ray-sphere intersection in object space
-      // Compute quadratic sphere coefficients
+      // Do ray-Triangle intersection in object space
+      // Compute quadratic Triangle coefficients
 
       float A = os_ray.dir().x() * os_ray.dir().x() +
                 os_ray.dir().y() * os_ray.dir().y() +
@@ -111,7 +68,7 @@ namespace gssmraytracer {
       }
 
 
-      // Compute sphere hit position and phi
+      // Compute Triangle hit position and phi
       phit = os_ray(thit);
 
       if (phit.x() == 0.f && phit.y() == 0.f) phit.x(1e-5f * mImpl->radius);
@@ -137,11 +94,11 @@ namespace gssmraytracer {
       return true;
 
     }
-    const float Sphere::reflectivity() const {
+    const float Triangle::reflectivity() const {
       return mImpl->reflectivity;
     }
 
-    bool Sphere::hit(const Ray &ws_ray, float &thit,
+    bool Triangle::hit(const Ray &ws_ray, float &thit,
                       std::shared_ptr<DifferentialGeometry> &dg) const {
       float phi;
       Point phit;
@@ -156,8 +113,8 @@ namespace gssmraytracer {
 		return false;
       }
 
-      // Do ray-sphere intersection in object space
-      // Compute quadratic sphere coefficients
+      // Do ray-Triangle intersection in object space
+      // Compute quadratic Triangle coefficients
 
       float A = os_ray.dir().x() * os_ray.dir().x() +
                 os_ray.dir().y() * os_ray.dir().y() +
@@ -185,7 +142,7 @@ namespace gssmraytracer {
       }
 
 
-      // Compute sphere hit position and phi
+      // Compute Triangle hit position and phi
       phit = os_ray(thit);
 
       if (phit.x() == 0.f && phit.y() == 0.f) phit.x(1e-5f * mImpl->radius);
@@ -207,7 +164,7 @@ namespace gssmraytracer {
              return false;
          }
 
-         // find parametric representation of sphere
+         // find parametric representation of Triangle
          float u = phi/mImpl->phiMax;
 
          float theta = acosf(Clamp(phit.z()/mImpl->radius, -1.f, 1.f));
@@ -243,7 +200,7 @@ namespace gssmraytracer {
 
 
 
-      // if the ray intersects the sphere return true
+      // if the ray intersects the Triangle return true
       std::shared_ptr<DifferentialGeometry> dg_temp(new DifferentialGeometry(mImpl->o2w(os_ray(thit-.007)),
                                 mImpl->o2w(dpdu),
                                 mImpl->o2w(dpdv),

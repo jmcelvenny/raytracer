@@ -3,6 +3,7 @@
 #include <gssmraytracer/math/Vector.h>
 #include <gssmraytracer/math/Transform.h>
 #include <gssmraytracer/utils/Scene.h>
+#include <gssmraytracer/utils/ProgressMeter.h>
 #include <gssmraytracer/utils/CmdLineFind.h>
 #include <gssmraytracer/geometry/Primitive.h>
 #include <vector>
@@ -66,14 +67,13 @@ void handle_key(unsigned char key, int x, int y) {
 
 int main(int argc, char* argv[]) {
     // Use the default constructor
-
     // Set up image
     CmdLineFind cmd(argc, argv);
     int width = cmd.find("-NX", 1280);
     int height = cmd.find("-NY", 720);
     std::string filename = cmd.find("-name", "image.exr");
     Image image(width, height);
-
+    ProgressMeter pm(width*height, "raytracing");
     // Set up camera
     Camera camera(Point(-5,0,40),Vector(0,0,-1),Vector(0,1,0));
     camera.setAspectRatio((float)width/height);
@@ -85,45 +85,48 @@ int main(int argc, char* argv[]) {
 
 
     // Set a world space position at the origin
-    Vector position1(-1.0,0.0,0.0);
+    Vector position1(-4,3,1);
     transform1.translate(position1);
 
     // Set a world space position at 10,0,0
-    Vector position2(11.,0.0,0.0);
+    Vector position2(10,10.0,-5);
     transform2.translate(position2);
 
     // Example of adding sphere to a vector of Shape*.  Can use to render multiple sphere
     // Based on depth
-    Point p(0,10,0);
-    std::shared_ptr<PointLight> light (new PointLight(Color(.6275, 1, .6667, 1), 1.f, p));
-    //std::shared_ptr<DirectionLight> light2 (new DirectionLight(Color(.6275,1,.6667,1), 1.f, Vector(-4,-3,0)));
-    //std::shared_ptr<DirectionLight> light3 (new DirectionLight(Color(.6275, 1, .6667,1), 1.f, Vector(4, 3, 0)));
-    std::shared_ptr<Shader> shader(new LambertianShader(Color(.6275,1,.666667,1)));
-    std::shared_ptr<Sphere> sphere1 (new Sphere(transform1, 5.0f, -10.0f, 10.0f, 360.0f));
-    std::shared_ptr<Sphere> sphere2 (new Sphere(transform2, 5.0f, -10.0f, 10.0f, 360.0f));
+    Point p(0,0,10);
+    std::shared_ptr<PointLight> light (new PointLight(Color(1, 0, .5, 1), 1.f, p));
+    std::shared_ptr<Shader> shader(new LambertianShader(Color(0.0f,0.0f,1.0f,1)));
+    std::shared_ptr<Shader> shader2(new LambertianShader(Color(1.0f, 0.0f, 0.0f, 1)));
+    std::shared_ptr<Sphere> sphere1 (new Sphere(transform1, 5.0f, -10.0f, 10.0f, 360.0f, .25f));
+    std::shared_ptr<Sphere> sphere2 (new Sphere(transform2, 5.0f, -10.0f, 10.0f, 360.0f, .55f));
 
     std::shared_ptr<Primitive> s1 (new Primitive(sphere1, shader));
-    std::shared_ptr<Primitive> s2 (new Primitive(sphere2, shader));
+    std::shared_ptr<Primitive> s2 (new Primitive(sphere2, shader2));
 
     Scene &scene = Scene::getInstance();
     scene.addLight(light);
     scene.addPrimitive(s1);
     scene.addPrimitive(s2);
 
-
     int samples=cmd.find("-samples", 4);
     /***********************Do Raycasting Here******************************/
     #pragma omp parallel for
     for (int r = 0; r < image.getHeight(); ++r) {
       for (int c = 0; c < image.getWidth(); ++c) {
+	      pm.update();
         Color colors[samples];
         for (int s=0; s<samples; s++) {
           // Create a color
           Color color;
           float closest_thit = std::numeric_limits<float>::infinity();
 
+          std::mt19937 mt(time(0));
 
-          Ray ray(camera.eye(), camera.view((float)(c)/image.getWidth(), (float)(r)/image.getHeight()));
+          float dr = mt() / pow(2, 33);
+          float dc = mt() / pow(2, 33);
+
+          Ray ray(camera.eye(), camera.view((float)(c+dc)/image.getWidth(), (float)(r+dr)/image.getHeight()));
 
           float thit = std::numeric_limits<float>::infinity();
           std::shared_ptr<DifferentialGeometry> dg;
@@ -132,13 +135,13 @@ int main(int argc, char* argv[]) {
           if(scene.hit(ray, thit, dg, primitive)) {
             if (thit < closest_thit) {
               closest_thit = thit;
-  	          color = primitive->shade(dg);
+  	          color = primitive->shade(dg,0);
             }
           }
           colors[s]=color;
         }
         //calculate the average color
-        float ar=0, ag=0, ab=0;
+        float ar=0.0, ag=0.0, ab=0.0;
         for (int i = 0; i<samples; ++i) {
           ar+=colors[i].red;
           ag+=colors[i].green;

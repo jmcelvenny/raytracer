@@ -9,7 +9,7 @@ namespace gssmraytracer {
   namespace utils {
     class Shader {
     public:
-      virtual Color shade(const geometry::DifferentialGeometry &dg) = 0;
+      virtual Color shade(const geometry::DifferentialGeometry &dg, int bounce) = 0;
     };
   }
 }

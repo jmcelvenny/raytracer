@@ -21,8 +21,7 @@ namespace gssmraytracer {
       LambertianShader(const Color &color);
       LambertianShader(const LambertianShader &);
       LambertianShader& operator=(const LambertianShader &);
-      Color shade(const geometry::DifferentialGeometry &dg);
-
+      Color shade(const geometry::DifferentialGeometry &dg, int bounce);
     private:
       class Impl;
       std::shared_ptr<Impl> mImpl;
