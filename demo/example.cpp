@@ -19,6 +19,7 @@
 #include "DirectionLight.h"
 #include "PointLight.h"
 #include "Light.h"
+#include "Plane.h"
 
 
 #ifdef __APPLE__
@@ -98,16 +99,20 @@ int main(int argc, char* argv[]) {
     std::shared_ptr<PointLight> light (new PointLight(Color(1, 0, .5, 1), 1.f, p));
     std::shared_ptr<Shader> shader(new LambertianShader(Color(0.0f,0.0f,1.0f,1)));
     std::shared_ptr<Shader> shader2(new LambertianShader(Color(1.0f, 0.0f, 0.0f, 1)));
+    std::shared_ptr<Shader> shader3 (new LambertianShader(Color(1.f,1.f,1.f,1)));
     std::shared_ptr<Sphere> sphere1 (new Sphere(transform1, 5.0f, -10.0f, 10.0f, 360.0f, .25f));
     std::shared_ptr<Sphere> sphere2 (new Sphere(transform2, 5.0f, -10.0f, 10.0f, 360.0f, .55f));
+    std::shared_ptr<Plane> plane1 (new Plane(Vector(0.f,-15.f,0.f), Vector(0.f, 1.f, 0.f), .55f));
 
     std::shared_ptr<Primitive> s1 (new Primitive(sphere1, shader));
     std::shared_ptr<Primitive> s2 (new Primitive(sphere2, shader2));
+    std::shared_ptr<Primitive> p1 (new Primitive(plane1, shader3));
 
     Scene &scene = Scene::getInstance();
     scene.addLight(light);
     scene.addPrimitive(s1);
     scene.addPrimitive(s2);
+    scene.addPrimitive(p1);
 
     int samples=cmd.find("-samples", 4);
     /***********************Do Raycasting Here******************************/

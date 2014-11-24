@@ -21,7 +21,7 @@ namespace gssmraytracer {
     Point::Point(const Point &p) : mImpl(new Impl) {
       mImpl->vec = p.mImpl->vec;
     }
-    Point::Point(const math::Vector &vec) {
+    Point::Point(const math::Vector &vec) : mImpl( new Impl) {
       mImpl->vec = Imath::Vec3<float>(vec.x(),vec.y(),vec.z());
 
     }

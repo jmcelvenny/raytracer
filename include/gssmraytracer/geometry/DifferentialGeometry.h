@@ -23,7 +23,8 @@ namespace gssmraytracer {
             const Normal &dndu, const Normal &dndv,
             const float u,
             const float v,
-            const Shape *sh
+            const Shape *sh,
+            const math::Vector dir
       );
 
       //! Copy constructor.  Performs shallow copy of *sh
@@ -34,6 +35,7 @@ namespace gssmraytracer {
       math::Vector dpdu, dpdv;
       Normal dndu, dndv;
       const Shape *shape;
+      math::Vector dir;
     private:
       //! Assignment operator forbidden.
       DifferentialGeometry& operator=(const DifferentialGeometry dg);

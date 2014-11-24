@@ -1,3 +1,6 @@
+#ifndef __SPHERE_H__
+#define __SPHERE_H__
+
 #include "Box.h"
 #include <gssmraytracer/geometry/Shape.h>
 #include <gssmraytracer/math/Transform.h>
@@ -24,3 +27,4 @@ namespace gssmraytracer {
     };
   }
 }
+#endif
