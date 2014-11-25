@@ -249,7 +249,7 @@ namespace gssmraytracer {
                                 mImpl->o2w(dpdv),
                                 mImpl->o2w(dndu),
                                 mImpl->o2w(dndv),
-                                u, v, this, math::Vector()));
+                                u, v, this, os_ray));
       dg = dg_temp;
 
        return true;

@@ -1,66 +1,62 @@
 #include "Plane.h"
-#include <gssmraytracer/geometry/Point.h>
-#include <gssmraytracer/math/Transform.h>
+#include "gssmraytracer/math/Transform.h"
 
-namespace gssmraytracer {
-  namespace geometry {
-    class Plane::Impl {
-    public:
-      math::Vector normal;
-      geometry::Point location;
-      float reflectivity;
-    };
+using namespace gssmraytracer::geometry;
 
-    Plane::Plane() : Shape(math::Transform(), 0.f), mImpl(new Impl){
-      mImpl->normal = math::Vector();
-      mImpl->location = geometry::Point();
-    }
+class Plane::Impl {
+public:
+  math::Vector norm;
+  math::Vector q1;
+  math::Vector q2;
+  geometry::Point pt;
+  float reflectivity;
+};
 
-    Plane::Plane(const math::Vector &loc, const math::Vector &n, float ref) : Shape(math::Transform(), ref), mImpl(new Impl) {
-      mImpl->normal = n.normalized();
-      mImpl->location = geometry::Point(loc);
-      mImpl->reflectivity = ref;
-    }
+Plane::Plane() : Shape(math::Transform(), 0.f), mImpl(new Impl){
+  mImpl->norm = math::Vector();
+  mImpl->pt = geometry::Point();
+  mImpl->reflectivity = 0.f;
+}
 
-    bool Plane::hit(const utils::Ray &ws_ray, float &tHit) const {
-      math::Transform tf = Shape::worldToObjectSpace();
-      utils::Ray os_ray = tf(ws_ray);
+Plane::Plane(const math::Transform &pos, const math::Vector &v1, const math::Vector &v2, float ref) :
+                    Shape(pos,ref), mImpl(new Impl)  {
+  mImpl->q1 = v1.normalized();
+  mImpl->q2 = (v2.normalized() - (v1.dot(v2)/v1.dot(v1))*v1).normalized();
+  mImpl->norm = (mImpl->q1.cross(mImpl->q2)).normalized();
+  mImpl->reflectivity = ref;
+}
 
-      tHit = (0 - os_ray.origin().x()*mImpl->normal.x() - os_ray.origin().z()*mImpl->normal.y()
-                - os_ray.origin().z()*mImpl->normal.z()) / mImpl->normal.dot(ws_ray.dir());
-      if(tHit > (float)ws_ray.mint() && tHit < (float)ws_ray.maxt())
-        return true;
-      return false;
-    }
+bool Plane::hit(const utils::Ray &ws_ray, float &tHit) const {
+  math::Transform t = Shape::worldToObjectSpace();
+  utils::Ray os_ray = t(ws_ray);
+  tHit = (0 - os_ray.origin().x()*mImpl->norm.x() - os_ray.origin().z()*mImpl->norm.y()
+            - os_ray.origin().z()*mImpl->norm.z()) / mImpl->norm.dot(ws_ray.dir());
+  if(tHit > ws_ray.mint() && tHit < ws_ray.maxt())
+    return true;
+  return false;
+}
 
-    bool Plane::hit(const utils::Ray &ws_ray, float &tHit, std::shared_ptr<geometry::DifferentialGeometry> &dg) const {
-      math::Transform tf = Shape::worldToObjectSpace();
-      utils::Ray os_ray = tf(ws_ray);
+bool Plane::hit(const utils::Ray &ws_ray, float &tHit, std::shared_ptr<geometry::DifferentialGeometry> &dg) const {
+  math::Transform t = Shape::worldToObjectSpace();
+  utils::Ray os_ray = t(ws_ray);
+  if(fabs(mImpl->norm.dot(os_ray.dir())) == 0.f)
+    return false;
+  tHit = -1*(os_ray.origin().x()*mImpl->norm.x() + os_ray.origin().z()*mImpl->norm.y()
+            + os_ray.origin().z()*mImpl->norm.z()) / mImpl->norm.dot(os_ray.dir());
+  if(tHit > ws_ray.mint() && tHit < ws_ray.maxt()) {
+    Point hit_pt = ws_ray(tHit);
+    float q12 = mImpl->q1.dot(mImpl->q1);
+    float q22 = mImpl->q2.dot(mImpl->q2);
+    math::Vector vec(0-hit_pt.x(), 0-hit_pt.y(), 0-hit_pt.z());
+    float v_dot_q1 = vec.dot(mImpl->q1);
+    float v_dot_q2 = vec.dot(mImpl->q2);
+    float uu = q12 * v_dot_q2;
+    float vv = q22 * v_dot_q1;
 
-      if(mImpl->normal.dot(os_ray.dir()))
-        return false;
-      tHit = (0 - os_ray.origin().x()*mImpl->normal.x() - os_ray.origin().z()*mImpl->normal.y()
-                - os_ray.origin().z()*mImpl->normal.z()) / mImpl->normal.dot(os_ray.dir());
-      if(tHit > (float)ws_ray.mint() && tHit < (float)ws_ray.maxt()) {
-        dg->nn = geometry::Normal(mImpl->normal);
-        dg->p = ws_ray(tHit);
-        dg->dir = ws_ray.dir();
-        return true;
-      }
-      return false;
-    }
-
-    Plane& Plane::operator=(const Plane& other) {
-      if (this != &other) {
-        mImpl->normal = other.mImpl->normal;
-        mImpl->location = other.mImpl->location;
-        mImpl->reflectivity = other.mImpl->reflectivity;
-      }
-      return *this;
-    }
-
-    const float Plane::reflectivity() const {
-      return mImpl->reflectivity;
-    }
+    std::shared_ptr<DifferentialGeometry> dg_temp(new DifferentialGeometry(hit_pt, mImpl->q1, mImpl->q2, Normal(math::Vector()), Normal(math::Vector()), uu, vv, this, os_ray));
+    dg_temp->dir = ws_ray.dir();
+    dg = dg_temp;
+    return true;
   }
+  return false;
 }

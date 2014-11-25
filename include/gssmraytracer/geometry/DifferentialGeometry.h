@@ -5,6 +5,8 @@
 #include "gssmraytracer/geometry/Normal.h"
 #include <memory>
 #include "gssmraytracer/geometry/Point.h"
+#include "gssmraytracer/utils/Ray.h"
+
 namespace gssmraytracer {
   namespace geometry {
     class Shape;
@@ -24,7 +26,7 @@ namespace gssmraytracer {
             const float u,
             const float v,
             const Shape *sh,
-            const math::Vector dir
+            const utils::Ray V
       );
 
       //! Copy constructor.  Performs shallow copy of *sh
@@ -36,6 +38,7 @@ namespace gssmraytracer {
       Normal dndu, dndv;
       const Shape *shape;
       math::Vector dir;
+      utils::Ray V;
     private:
       //! Assignment operator forbidden.
       DifferentialGeometry& operator=(const DifferentialGeometry dg);

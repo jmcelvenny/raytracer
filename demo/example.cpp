@@ -81,38 +81,55 @@ int main(int argc, char* argv[]) {
     camera.setFOV(60.f);
 
     // Create transforms for spheres
-    Transform transform1, transform2;
+    Transform transform1, transform2, transform3, transform4, transform5;
 
 
 
     // Set a world space position at the origin
     Vector position1(-4,3,1);
     transform1.translate(position1);
-
     // Set a world space position at 10,0,0
     Vector position2(10,10.0,-5);
     transform2.translate(position2);
 
+    Vector position3(0.f, -12.5, 0.f);
+    transform3.translate(position3);
+
+    Vector position4(0.f, 5.f, 2.5f);
+    transform4.translate(position4);
+
+    Vector position5(5.f, 0.f, 5.f);
+    transform5.translate(position5);
+
     // Example of adding sphere to a vector of Shape*.  Can use to render multiple sphere
     // Based on depth
     Point p(0,0,10);
-    std::shared_ptr<PointLight> light (new PointLight(Color(1, 0, .5, 1), 1.f, p));
+    std::shared_ptr<PointLight> light (new PointLight(Color(1, 0, .5, 1), 3.f, p));
     std::shared_ptr<Shader> shader(new LambertianShader(Color(0.0f,0.0f,1.0f,1)));
     std::shared_ptr<Shader> shader2(new LambertianShader(Color(1.0f, 0.0f, 0.0f, 1)));
     std::shared_ptr<Shader> shader3 (new LambertianShader(Color(1.f,1.f,1.f,1)));
-    std::shared_ptr<Sphere> sphere1 (new Sphere(transform1, 5.0f, -10.0f, 10.0f, 360.0f, .25f));
+    std::shared_ptr<Shader> shader4 (new LambertianShader(Color(0.f,1.f,0.f,1)));
+    std::shared_ptr<Shader> shader5 (new LambertianShader(Color(.5f, .5f, 0.f, 1)));
+    std::shared_ptr<Sphere> sphere1 (new Sphere(transform1, 2.0f, -10.0f, 10.0f, 360.0f, .9f));
     std::shared_ptr<Sphere> sphere2 (new Sphere(transform2, 5.0f, -10.0f, 10.0f, 360.0f, .55f));
-    std::shared_ptr<Plane> plane1 (new Plane(Vector(0.f,-15.f,0.f), Vector(0.f, 1.f, 0.f), .55f));
+    std::shared_ptr<Sphere> sphere3 (new Sphere(transform4, 3.5f, -10.0f, 10.0f, 360.0f, .25f));
+    std::shared_ptr<Sphere> sphere4 (new Sphere(transform5, 6.25f, -10.0f, 10.0f, 360.0f, .40f));
+    std::shared_ptr<Plane> plane1 (new Plane(transform3, Vector(.5f,0.f,.5f), Vector(.5f, 0.f, -.5f), .15f));
 
     std::shared_ptr<Primitive> s1 (new Primitive(sphere1, shader));
     std::shared_ptr<Primitive> s2 (new Primitive(sphere2, shader2));
     std::shared_ptr<Primitive> p1 (new Primitive(plane1, shader3));
+    std::shared_ptr<Primitive> s3 (new Primitive(sphere3, shader4));
+    std::shared_ptr<Primitive> s4 (new Primitive(sphere4, shader5));
+
 
     Scene &scene = Scene::getInstance();
     scene.addLight(light);
     scene.addPrimitive(s1);
     scene.addPrimitive(s2);
     scene.addPrimitive(p1);
+    scene.addPrimitive(s3);
+    scene.addPrimitive(s4);
 
     int samples=cmd.find("-samples", 4);
     /***********************Do Raycasting Here******************************/

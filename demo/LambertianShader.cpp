@@ -87,18 +87,22 @@ namespace gssmraytracer {
 	          shadeColor.green += mImpl->color.green*factor;
             shadeColor.blue += mImpl->color.blue*factor;
 		      }
-          if (dg.shape->reflectivity() > 0 && bounce < mImpl->max_num_reflects) {
-            math::Vector normal = math::Vector(dg.nn.x(), dg.nn.y(), dg.nn.z());
-            float cl = -light_ray.dir().dot(normal);
-            Ray reflect_ray = Ray(dg.p, light_ray.dir()+(2*normal* cl));
-            if (!Scene::getInstance().hit(reflect_ray)) {
-              Color temp = shade(dg, bounce+1);
-              shadeColor.red+=(temp.red*dg.shape->reflectivity());
-              shadeColor.green+=(temp.green*dg.shape->reflectivity());
-              shadeColor.blue+=(temp.blue*dg.shape->reflectivity());
-            }
-	        }
          }
+    }
+
+    if (dg.shape->reflectivity() > 0 && bounce < mImpl->max_num_reflects) {
+      math::Vector normal = math::Vector(dg.nn.x(), dg.nn.y(), dg.nn.z());
+      float cl = -dg.V.dir().dot(normal);
+      Ray reflect_ray = Ray(dg.p, dg.V.dir()+(2*normal* cl));
+      std::shared_ptr<DifferentialGeometry> dg1;
+      std::shared_ptr<Primitive> prim;
+      float rHit;
+      if (Scene::getInstance().hit(reflect_ray, rHit, dg1, prim)) {
+        Color temp = prim->shade(dg1, bounce+1);
+        shadeColor.red+=(temp.red*dg.shape->reflectivity());
+        shadeColor.green+=(temp.green*dg.shape->reflectivity());
+        shadeColor.blue+=(temp.blue*dg.shape->reflectivity());
+      }
     }
     return shadeColor;
   }
